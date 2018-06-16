@@ -4,13 +4,21 @@ require 'rubygems'
 require 'mechanize'
 require 'pry'
 
-IMG_HOME='https://pds-imaging.jpl.nasa.gov/data/lo/LO_1001/EXTRAS/BROWSE/'
+class Crawler
+  IMG_HOME='https://pds-imaging.jpl.nasa.gov/data/lo/LO_1001/EXTRAS/BROWSE/'
 
-agent = Mechanize.new
-page = agent.get(IMG_HOME)
+  def initialize
+    missions = list_folders
+    binding.pry
+  end
 
-links = page.search('#indexlist a')
-content_links = links[7..-1]
-links_with_targets = content_links.reject { |link| link.text.empty? }
+  def list_folders(url: IMG_HOME)
+    agent = Mechanize.new
+    page = agent.get(url)
+    links = page.search('#indexlist a')
+    content_links = links[7..-1]
+    content_links.reject { |link| link.text.empty? }
+  end
+end
 
-binding.pry
+Crawler.new
