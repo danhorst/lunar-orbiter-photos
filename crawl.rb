@@ -11,6 +11,8 @@ class Crawler
 
   def self.logger(output: STDOUT, level: Logger::DEBUG)
     @@logger ||= Logger.new(output)
+    @@logger.level = level
+    @@logger
   end
 
   module Content
@@ -18,13 +20,30 @@ class Crawler
       Crawler.logger.info("List links for: #{url}")
       agent = Mechanize.new
       page = agent.get(url)
-      links = page.search('#indexlist a')
-      content_links = links[7..-1]
+      links = page.search('#indexlist .indexcolname a')
+      content_links = links[2..-1]
       content_links.reject { |link| link.text.empty? }
-      Crawler.logger.debug(content_links)
+      Crawler.logger.debug(content_links.collect{ |link| path_from_anchor(link)}.inspect)
       content_links
     end
     module_function :list
+
+    def frames(missions:)
+      Crawler.logger.info('#list_frames')
+      agent = Mechanize.new
+      frames = Hash.new
+      missions.each do |mission|
+        mission_path = path_from_anchor(mission)
+        url = url(mission: mission_path)
+        frame_paths = []
+        list(url: url).each do |frame|
+          frame_paths << path_from_anchor(frame)
+        end
+        frames[mission_path] = frame_paths
+      end
+      frames
+    end
+    module_function :frames
 
     def path_from_anchor(anchor)
       anchor.attribute_nodes.first.value
@@ -37,11 +56,13 @@ class Crawler
     module_function :url
   end
 
-  def self.fetch_structure
+  def self.fetch_structure(file: 'structure.json')
     logger.info('#fetch_structure')
-    crawler = self.new
-    frames = crawler.list_frames(missions: Crawler::Content.links)
-    JSON.pretty_generate(frames)
+    missions = Crawler::Content.list
+    logger.debug missions.inspect
+    frames = Crawler::Content.frames(missions: missions)
+    logger.debug frames.inspect
+    File.write(file, JSON.pretty_generate(frames))
   end
 
   def self.structure_paths(input_file: 'structure.json')
@@ -77,22 +98,6 @@ class Crawler
     image_urls
   end
 
-  def list_frames(missions:)
-    self.class.logger.info('#list_frames')
-    agent = Mechanize.new
-    frames = Hash.new
-    missions.each do |mission|
-      mission_path = Crawler::Content.path_from_anchor(mission)
-      url = Crawler::Content.url(mission: mission_path)
-      frame_paths = []
-      Crawler::Content.list(url: url).each do |frame|
-        frame_paths << Crawler::Content.path_from_anchor(frame)
-      end
-      frames[mission_path] = frame_paths
-    end
-    frames
-  end
-
   def list_images(frames:)
     self.class.logger.info('#list_images')
     image_urls = []
@@ -110,6 +115,6 @@ class Crawler
   end
 end
 
-#Crawler.fetch_structure
+puts Crawler.fetch_structure
 #puts Crawler.structure_paths
-puts Crawler.list_images
+#puts Crawler.list_images
