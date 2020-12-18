@@ -21,8 +21,20 @@ class Crawler
       links = page.search('#indexlist a')
       content_links = links[7..-1]
       content_links.reject { |link| link.text.empty? }
+      Crawler.logger.debug(content_links)
+      content_links
     end
     module_function :list
+
+    def path_from_anchor(anchor)
+      anchor.attribute_nodes.first.value
+    end
+    module_function :path_from_anchor
+
+    def url(mission:, frame: '', image: '')
+      URI.join(IMG_HOME, mission, frame, image)
+    end
+    module_function :url
   end
 
   def self.fetch_structure
@@ -46,7 +58,7 @@ class Crawler
     structure.each_pair do |mission, frames|
       frames.each do |frame|
         logger.debug("Finding URL for #{mission}, #{frame}")
-        frame_urls << content_url(mission: mission, frame: frame)
+        frame_urls << Crawler::Content.url(mission: mission, frame: frame)
       end
     end
     frame_urls
@@ -54,14 +66,14 @@ class Crawler
 
   def self.list_images(paths: self.structure_paths)
     logger.info('#list_images')
-    crawler = self.new
     image_urls = []
     paths.each do |path|
       Crawler::Content.list(url: path).each do |image|
-        logger.debug("Image URLs for: #{path}")
-        image_urls << URI.join(path, path_from_anchor(image))
+        logger.info("Image URLs for: #{path}")
+        image_urls << URI.join(path, Crawler::Content.path_from_anchor(image))
       end
     end
+    logger.debug(image_urls)
     image_urls
   end
 
@@ -70,11 +82,11 @@ class Crawler
     agent = Mechanize.new
     frames = Hash.new
     missions.each do |mission|
-      mission_path = path_from_anchor(mission)
-      url = content_url(mission: mission_path)
+      mission_path = Crawler::Content.path_from_anchor(mission)
+      url = Crawler::Content.url(mission: mission_path)
       frame_paths = []
       Crawler::Content.list(url: url).each do |frame|
-        frame_paths << path_from_anchor(frame)
+        frame_paths << Crawler::Content.path_from_anchor(frame)
       end
       frames[mission_path] = frame_paths
     end
@@ -86,27 +98,15 @@ class Crawler
     image_urls = []
     frames.each_pair do |mission, frame_list|
       frame_list.each do |frame|
-        frame_url = content_url(mission: mission, frame: frame)
+        frame_url = Crawler::Content.url(mission: mission, frame: frame)
         Crawler::Content.list(url: frame_url).each do |image|
-          image_path = path_from_anchor(image)
+          image_path = Crawler::Content.path_from_anchor(image)
           self.class.logger.debug(image_path)
-          image_urls << content_url(mission: mission, frame: frame, image: image_path)
+          image_urls << Crawler::Content.url(mission: mission, frame: frame, image: image_path)
         end
       end
     end
     image_urls
-  end
-
-  def self.path_from_anchor(anchor)
-    anchor.attribute_nodes.first.value
-  end
-
-  def self.content_url(mission:, frame: '', image: '')
-    URI.join(IMG_HOME, mission, frame, image)
-  end
-
-  def content_url(**args)
-    self.class.content_url(**args)
   end
 end
 
