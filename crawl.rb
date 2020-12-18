@@ -15,19 +15,19 @@ class Crawler
   end
 
   def self.structure_paths(input_file: 'structure.json')
-     if File.exist? input_file
-       input = File.read input_file
-       structure = JSON.parse(input)
-     else
-       structure = fetch_structure
-     end
-     frame_urls = []
-     structure.each_pair do |mission, frames|
-       frames.each do |frame|
-         frame_urls << content_url(mission: mission, frame: frame)
-       end
-     end
-     frame_urls
+    if File.exist? input_file
+      input = File.read input_file
+      structure = JSON.parse(input)
+    else
+      structure = fetch_structure
+    end
+    frame_urls = []
+    structure.each_pair do |mission, frames|
+      frames.each do |frame|
+        frame_urls << content_url(mission: mission, frame: frame)
+      end
+    end
+    frame_urls
   end
 
   def self.list_images(paths: self.structure_paths)
@@ -68,10 +68,10 @@ class Crawler
     frames.each_pair do |mission, frame_list|
       frame_list.each do |frame|
         frame_url = content_url(mission: mission, frame: frame)
-	list_content(url: frame_url).each do |image|
-	  image_path = path_from_anchor(image)
-	  image_urls << content_url(mission: mission, frame: frame, image: image_path)
-	end
+        list_content(url: frame_url).each do |image|
+          image_path = path_from_anchor(image)
+          image_urls << content_url(mission: mission, frame: frame, image: image_path)
+        end
       end
     end
     image_urls
