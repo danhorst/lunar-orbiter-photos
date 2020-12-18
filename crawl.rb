@@ -13,10 +13,22 @@ class Crawler
     @@logger ||= Logger.new(output)
   end
 
+  module Content
+    def list(url: Crawler::IMG_HOME)
+      Crawler.logger.info("List links for: #{url}")
+      agent = Mechanize.new
+      page = agent.get(url)
+      links = page.search('#indexlist a')
+      content_links = links[7..-1]
+      content_links.reject { |link| link.text.empty? }
+    end
+    module_function :list
+  end
+
   def self.fetch_structure
     logger.info('#fetch_structure')
     crawler = self.new
-    frames = crawler.list_frames(missions: crawler.list_content)
+    frames = crawler.list_frames(missions: Crawler::Content.links)
     JSON.pretty_generate(frames)
   end
 
@@ -45,21 +57,12 @@ class Crawler
     crawler = self.new
     image_urls = []
     paths.each do |path|
-      crawler.list_content(url: path).each do |image|
-        logger.debug("Image URL for #{path}")
+      Crawler::Content.list(url: path).each do |image|
+        logger.debug("Image URLs for: #{path}")
         image_urls << URI.join(path, path_from_anchor(image))
       end
     end
     image_urls
-  end
-
-  def list_content(url: IMG_HOME)
-    self.class.logger.info('#list_content')
-    agent = Mechanize.new
-    page = agent.get(url)
-    links = page.search('#indexlist a')
-    content_links = links[7..-1]
-    content_links.reject { |link| link.text.empty? }
   end
 
   def list_frames(missions:)
@@ -70,7 +73,7 @@ class Crawler
       mission_path = path_from_anchor(mission)
       url = content_url(mission: mission_path)
       frame_paths = []
-      list_content(url: url).each do |frame|
+      Crawler::Content.list(url: url).each do |frame|
         frame_paths << path_from_anchor(frame)
       end
       frames[mission_path] = frame_paths
@@ -84,7 +87,7 @@ class Crawler
     frames.each_pair do |mission, frame_list|
       frame_list.each do |frame|
         frame_url = content_url(mission: mission, frame: frame)
-        list_content(url: frame_url).each do |image|
+        Crawler::Content.list(url: frame_url).each do |image|
           image_path = path_from_anchor(image)
           self.class.logger.debug(image_path)
           image_urls << content_url(mission: mission, frame: frame, image: image_path)
