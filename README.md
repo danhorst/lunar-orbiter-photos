@@ -6,8 +6,8 @@ The digital artifacts that LORIP created are [now housed at the JPL][4].
 In their holdings there are [PNG files created from the original, lossless images][5].
 Unfortunately there isn't an easy way to browse them.
 
-There are 3011 photos across the 5 missions.
-Combined the PNG derivatives, weigh in at just under 18Gb.
+There are about 3000 photos in the archive from the 5 missions.
+Combined, the PNG derivatives weigh in at just under 18Gb.
 
 This project contains the scripts I used to explore the collection myself.
 I'm not a lunar scientist; I'm only looking for pretty pictures.
@@ -33,7 +33,7 @@ My favorites are:
 
 ## Using the Tool
 
-Becuase this is a Ruby script you'll need to [install Ruby][6] (see `.ruby_version` for the required version) and [`bundler`][7]
+Because this is a Ruby script you'll need to [install Ruby][6] (see `.ruby_version` for the required version) and [`bundler`][7]
 
 `crawl.rb` generates two files:
 
