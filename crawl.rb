@@ -101,10 +101,6 @@ class Crawler
     anchor.attribute_nodes.first.value
   end
 
-  def path_from_anchor(anchor)
-    self.class.path_from(anchor)
-  end
-
   def self.content_url(mission:, frame: '', image: '')
     URI.join(IMG_HOME, mission, frame, image)
   end
