@@ -1,4 +1,5 @@
 #! /usr/bin/env ruby
+# frozen_string_literal: true
 
 require 'rubygems'
 require 'mechanize'
@@ -7,33 +8,33 @@ require 'json'
 require 'uri'
 
 class Crawler
-  IMG_HOME='https://pds-imaging.jpl.nasa.gov/data/lo/LO_1001/EXTRAS/BROWSE/'.freeze
-  STRUCTURE_FILE='structure.json'.freeze
-  URL_LIST='image_urls.txt'.freeze
+  IMG_HOME = 'https://pds-imaging.jpl.nasa.gov/data/lo/LO_1001/EXTRAS/BROWSE/'
+  STRUCTURE_FILE = 'structure.json'
+  URL_LIST = 'image_urls.txt'
 
-  def self.logger(output: STDOUT, level: Logger::DEBUG)
+  def self.logger(output: $stdout, level: Logger::DEBUG)
     @@logger ||= Logger.new(output)
     @@logger.level = level
     @@logger
   end
 
   module Content
+    module_function
+
     def list(url: Crawler::IMG_HOME)
       Crawler.logger.info("List links for: #{url}")
       agent = Mechanize.new
       page = agent.get(url)
       links = page.search('#indexlist .indexcolname a')
-      content_links = links[2..-1]
+      content_links = links[2..]
       content_links.reject { |link| link.text.empty? }
-      Crawler.logger.debug(content_links.collect{ |link| path_from_anchor(link)}.inspect)
+      Crawler.logger.debug(content_links.collect { |link| path_from_anchor(link) }.inspect)
       content_links
     end
-    module_function :list
 
     def frames(missions:)
       Crawler.logger.info('#list_frames')
-      agent = Mechanize.new
-      frames = Hash.new
+      frames = {}
       missions.each do |mission|
         mission_path = path_from_anchor(mission)
         url = url(mission: mission_path)
@@ -45,17 +46,14 @@ class Crawler
       end
       frames
     end
-    module_function :frames
 
     def path_from_anchor(anchor)
       anchor.attribute_nodes.first.value
     end
-    module_function :path_from_anchor
 
     def url(mission:, frame: '', image: '')
       URI.join(IMG_HOME, mission, frame, image)
     end
-    module_function :url
   end
 
   def self.fetch_structure(output: STRUCTURE_FILE)
@@ -87,7 +85,7 @@ class Crawler
     frame_urls
   end
 
-  def self.list_images(paths: self.structure_paths)
+  def self.list_images(paths: structure_paths)
     logger.info('#list_images')
     image_urls = []
     paths.each do |path|
@@ -102,7 +100,5 @@ class Crawler
   end
 end
 
-unless File.exist? Crawler::STRUCTURE_FILE
-  Crawler.fetch_structure
-end
+Crawler.fetch_structure unless File.exist? Crawler::STRUCTURE_FILE
 IO.write(Crawler::URL_LIST, Crawler.list_images.join("\n"))
