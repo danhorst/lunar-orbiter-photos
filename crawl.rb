@@ -7,7 +7,9 @@ require 'json'
 require 'uri'
 
 class Crawler
-  IMG_HOME='https://pds-imaging.jpl.nasa.gov/data/lo/LO_1001/EXTRAS/BROWSE/'
+  IMG_HOME='https://pds-imaging.jpl.nasa.gov/data/lo/LO_1001/EXTRAS/BROWSE/'.freeze
+  STRUCTURE_FILE='structure.json'.freeze
+  URL_LIST='image_urls.txt'.freeze
 
   def self.logger(output: STDOUT, level: Logger::DEBUG)
     @@logger ||= Logger.new(output)
@@ -56,24 +58,24 @@ class Crawler
     module_function :url
   end
 
-  def self.fetch_structure(file: 'structure.json')
+  def self.fetch_structure(output: STRUCTURE_FILE)
     logger.info('#fetch_structure')
     missions = Crawler::Content.list
     logger.debug missions.inspect
     frames = Crawler::Content.frames(missions: missions)
     logger.debug frames.inspect
-    File.write(file, JSON.pretty_generate(frames))
+    IO.write(output, JSON.pretty_generate(frames))
   end
 
-  def self.structure_paths(input_file: 'structure.json')
+  def self.structure_paths(input_file: STRUCTURE_FILE)
     logger.info('#structure_paths')
     if File.exist? input_file
       logger.debug("Input file: #{input_file}")
       input = File.read input_file
       structure = JSON.parse(input)
     else
-      logger.debug('No input file found')
-      structure = fetch_structure
+      logger.error("Input file #{input_file} not found. Run Crawler.fetch_structure to generate it.")
+      exit
     end
     frame_urls = []
     structure.each_pair do |mission, frames|
@@ -91,30 +93,16 @@ class Crawler
     paths.each do |path|
       Crawler::Content.list(url: path).each do |image|
         logger.info("Image URLs for: #{path}")
-        image_urls << URI.join(path, Crawler::Content.path_from_anchor(image))
-      end
-    end
-    logger.debug(image_urls)
-    image_urls
-  end
-
-  def list_images(frames:)
-    self.class.logger.info('#list_images')
-    image_urls = []
-    frames.each_pair do |mission, frame_list|
-      frame_list.each do |frame|
-        frame_url = Crawler::Content.url(mission: mission, frame: frame)
-        Crawler::Content.list(url: frame_url).each do |image|
-          image_path = Crawler::Content.path_from_anchor(image)
-          self.class.logger.debug(image_path)
-          image_urls << Crawler::Content.url(mission: mission, frame: frame, image: image_path)
-        end
+        image_url = URI.join(path, Crawler::Content.path_from_anchor(image))
+        logger.debug(image_url)
+        image_urls << image_url.to_s
       end
     end
     image_urls
   end
 end
 
-puts Crawler.fetch_structure
-#puts Crawler.structure_paths
-#puts Crawler.list_images
+unless File.exist? Crawler::STRUCTURE_FILE
+  Crawler.fetch_structure
+end
+IO.write(Crawler::URL_LIST, Crawler.list_images.join("\n"))
