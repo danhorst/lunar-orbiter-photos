@@ -31,8 +31,25 @@ My favorites are:
 - [FRAME_5151_M.PNG](https://pds-imaging.jpl.nasa.gov/data/lo/LO_1001/EXTRAS/BROWSE/LO5/FRAME_5151/FRAME_5151_M.PNG)
 - [FRAME_5201_M.PNG](https://pds-imaging.jpl.nasa.gov/data/lo/LO_1001/EXTRAS/BROWSE/LO5/FRAME_5201/FRAME_5201_M.PNG)
 
+## Using the Tool
+
+Becuase this is a Ruby script you'll need to [install Ruby][6] (see `.ruby_version` for the required version) and [`bundler`][7]
+
+`crawl.rb` generates two files:
+
+1. `structure.json` is an intermediate representation of the site structure; it speeds up processing
+2. `image_urls.txt` is a list of absolute URLs for the PNGs
+
+One way to download all the images is to use `wget`
+
+```
+wget -i image_urls.txt
+```
+
 [1]: http://www.moonviews.com/
 [2]: https://www.wired.com/2014/04/lost-lunar-photos-recovered-by-great-feats-of-hackerdom-developed-at-a-mcdonalds/
 [3]: http://www.worldofindie.co.uk/?p=682
 [4]: https://pds-imaging.jpl.nasa.gov/volumes/loirp.html
 [5]: https://pds-imaging.jpl.nasa.gov/data/lo/LO_1001/EXTRAS/BROWSE/
+[6]: http://www.ruby-lang.org/en/downloads/
+[7]: https://bundler.io/
