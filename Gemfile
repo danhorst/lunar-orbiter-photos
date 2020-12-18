@@ -2,5 +2,6 @@
 
 source "https://rubygems.org"
 
-gem "mechanize"
-gem "pry"
+ruby File.read('.ruby-version').chomp
+
+gem 'mechanize'

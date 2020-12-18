@@ -2,7 +2,6 @@
 
 require 'rubygems'
 require 'mechanize'
-require 'pry'
 require 'JSON'
 require 'URI'
 
