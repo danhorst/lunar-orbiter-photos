@@ -2,8 +2,8 @@
 
 require 'rubygems'
 require 'mechanize'
-require 'JSON'
-require 'URI'
+require 'json'
+require 'uri'
 
 class Crawler
   IMG_HOME='https://pds-imaging.jpl.nasa.gov/data/lo/LO_1001/EXTRAS/BROWSE/'
